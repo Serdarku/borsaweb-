@@ -24,6 +24,18 @@ cd apps/quant && pip install -r requirements.txt && uvicorn main:app --reload --
 docker compose up -d --build
 ```
 
+## APK (Capacitor)
+```bash
+cd apps/web
+# 1) Siteyi deploy edin ve URL'i ayarlayın
+set CAPACITOR_SERVER_URL=https://siteniz.com
+# 2) Android projesini senkronize edin
+npm run cap:sync
+# 3) Android Studio ile açın ve APK oluşturun
+npm run cap:open:android
+```
+Not: Android Studio ve Android SDK kurulu olmalıdır.
+
 ## Faz Planı
 Faz 0 iskelet tamamlandı. Sonraki: Faz 1 data layer, Faz 2 quant, Faz 3 frontend sayfaları, ...
 Detaylar: PLAN.md

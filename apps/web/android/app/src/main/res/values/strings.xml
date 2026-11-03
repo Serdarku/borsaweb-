@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BorsaWeb</string>
+    <string name="title_activity_main">BorsaWeb</string>
+    <string name="package_name">com.borsaweb.app</string>
+    <string name="custom_url_scheme">com.borsaweb.app</string>
+</resources>
