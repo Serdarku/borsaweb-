@@ -20,6 +20,17 @@ export default function Portfoy() {
   const [riskResult, setRiskResult] = useState<any>(null);
   const [stressResult, setStressResult] = useState<any>(null);
 
+  // Monte Carlo
+  const [mcSymbol, setMcSymbol] = useState("THYAO");
+  const [mcDays, setMcDays] = useState(250);
+  const [mcResult, setMcResult] = useState<any>(null);
+  const [mcLoading, setMcLoading] = useState(false);
+
+  // Markowitz
+  const [mkSymbols, setMkSymbols] = useState("THYAO,GARAN,ASELS,KCHOL");
+  const [mkResult, setMkResult] = useState<any>(null);
+  const [mkLoading, setMkLoading] = useState(false);
+
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -68,15 +79,12 @@ export default function Portfoy() {
 
   async function analyzeRisk() {
     setRiskResult(null);
-    // fetch histories and compute portfolio returns
     const histMap: Record<string, any[]> = {};
     for (const s of symbols) {
       try { histMap[s] = await j(`/api/history?symbol=${s}&range=1y&interval=1d`); } catch { histMap[s] = []; }
     }
-    // align lengths
     const minLen = Math.min(...Object.values(histMap).map((a) => a.length));
     if (minLen < 5) { setRiskResult({ error: "yetersiz veri" }); return; }
-    // compute returns per symbol
     const returnsBySymbol: Record<string, number[]> = {};
     for (const s of symbols) {
       const bars = histMap[s].slice(-minLen);
@@ -99,6 +107,43 @@ export default function Portfoy() {
     setStressResult(null);
     const res = await j("/api/quant/stress-test", { method: "POST", body: JSON.stringify({ weights, scenario: "bist_crash" }) });
     setStressResult(res);
+  }
+
+  async function runMonteCarlo() {
+    setMcLoading(true); setMcResult(null);
+    try {
+      const hist = await j(`/api/history?symbol=${mcSymbol}&range=2y&interval=1d`);
+      const prices = (hist || []).map((b: any) => b.close);
+      const res = await j("/api/quant/monte-carlo", { method: "POST", body: JSON.stringify({ prices, days: mcDays, paths: 2000 }) });
+      setMcResult(res);
+    } catch (e: any) {
+      setMcResult({ error: e?.message || String(e) });
+    } finally {
+      setMcLoading(false);
+    }
+  }
+
+  async function runMarkowitz() {
+    setMkLoading(true); setMkResult(null);
+    try {
+      const syms = mkSymbols.split(",").map((s) => s.trim().toUpperCase()).filter(Boolean);
+      const series: Record<string, number[]> = {};
+      const histories: Record<string, any[]> = {};
+      for (const s of syms) {
+        const h = await j(`/api/history?symbol=${s}&range=2y&interval=1d`);
+        histories[s] = h || [];
+      }
+      const minLen = Math.min(...Object.values(histories).map((a) => a.length));
+      for (const s of syms) {
+        series[s] = histories[s].slice(-minLen).map((b: any) => b.close);
+      }
+      const res = await j("/api/quant/markowitz", { method: "POST", body: JSON.stringify({ series, risk_free: 0 }) });
+      setMkResult(res);
+    } catch (e: any) {
+      setMkResult({ error: e?.message || String(e) });
+    } finally {
+      setMkLoading(false);
+    }
   }
 
   return (
@@ -161,6 +206,75 @@ export default function Portfoy() {
           <pre className="text-xs text-zinc-300 whitespace-pre-wrap">{JSON.stringify(stressResult, null, 2)}</pre>
         </div>
       )}
+
+      {/* Monte Carlo */}
+      <div className="rounded-lg border border-zinc-800 p-4 space-y-3">
+        <h2 className="font-semibold">Monte Carlo Simülasyonu (GBM)</h2>
+        <div className="flex flex-wrap gap-2">
+          <input value={mcSymbol} onChange={(e) => setMcSymbol(e.target.value)} className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1" placeholder="Sembol" />
+          <input type="number" value={mcDays} onChange={(e) => setMcDays(+e.target.value)} className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 w-24" placeholder="Gün" />
+          <button onClick={runMonteCarlo} disabled={mcLoading} className="bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded text-sm disabled:opacity-50">
+            {mcLoading ? "Hesaplanıyor…" : "Çalıştır"}
+          </button>
+        </div>
+        {mcResult && !mcResult.error && (
+          <div className="grid md:grid-cols-2 gap-3 text-sm">
+            <div className="space-y-1">
+              <div>Güncel: {mcResult.current?.toFixed(2)}</div>
+              <div>Ayı (5%): {mcResult.bear_5?.toFixed(2)}</div>
+              <div>Baz (50%): {mcResult.base_50?.toFixed(2)}</div>
+              <div>Boğa (95%): {mcResult.bull_95?.toFixed(2)}</div>
+              <div>Beklenen: {mcResult.expected_terminal?.toFixed(2)}</div>
+            </div>
+            <div className="space-y-1">
+              <div>VaR %95: {mcResult.var95?.toFixed(2)}</div>
+              <div>CVaR %95: {mcResult.cvar95?.toFixed(2)}</div>
+              <div>Kâr Olasılığı: {(mcResult.prob_profit * 100)?.toFixed(1)}%</div>
+              <div>Ort. Max DD: {(mcResult.avg_max_drawdown * 100)?.toFixed(1)}%</div>
+              <div>Yıllık Getiri: {(mcResult.mu_annual * 100)?.toFixed(1)}% · Vol: {(mcResult.sigma_annual * 100)?.toFixed(1)}%</div>
+            </div>
+          </div>
+        )}
+        {mcResult?.error && <div className="text-rose-400 text-sm">{mcResult.error}</div>}
+      </div>
+
+      {/* Markowitz */}
+      <div className="rounded-lg border border-zinc-800 p-4 space-y-3">
+        <h2 className="font-semibold">Markowitz Portföy Optimizasyonu</h2>
+        <div className="flex flex-wrap gap-2">
+          <input value={mkSymbols} onChange={(e) => setMkSymbols(e.target.value)} className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 w-72" placeholder="Semboller (virgülle)" />
+          <button onClick={runMarkowitz} disabled={mkLoading} className="bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded text-sm disabled:opacity-50">
+            {mkLoading ? "Hesaplanıyor…" : "Optimize Et"}
+          </button>
+        </div>
+        {mkResult && !mkResult.error && (
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h3 className="font-medium mb-1">Max Sharpe</h3>
+              <ul className="space-y-1">
+                {Object.entries(mkResult.max_sharpe.weights).map(([k, v]: any) => (
+                  <li key={k}>{k}: {(v * 100).toFixed(1)}%</li>
+                ))}
+              </ul>
+              <div className="mt-2 text-zinc-400">
+                Getiri: {(mkResult.max_sharpe.expected_return * 100).toFixed(1)}% · Vol: {(mkResult.max_sharpe.volatility * 100).toFixed(1)}% · Sharpe: {mkResult.max_sharpe.sharpe.toFixed(2)}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-medium mb-1">Min Varyans</h3>
+              <ul className="space-y-1">
+                {Object.entries(mkResult.min_variance.weights).map(([k, v]: any) => (
+                  <li key={k}>{k}: {(v * 100).toFixed(1)}%</li>
+                ))}
+              </ul>
+              <div className="mt-2 text-zinc-400">
+                Getiri: {(mkResult.min_variance.expected_return * 100).toFixed(1)}% · Vol: {(mkResult.min_variance.volatility * 100).toFixed(1)}% · Sharpe: {mkResult.min_variance.sharpe.toFixed(2)}
+              </div>
+            </div>
+          </div>
+        )}
+        {mkResult?.error && <div className="text-rose-400 text-sm">{mkResult.error}</div>}
+      </div>
     </div>
   );
 }
