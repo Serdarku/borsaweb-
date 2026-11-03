@@ -1,42 +1,63 @@
 "use client";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Card, Badge, Input, Button, Skeleton, Table, Th, Td } from "@/components/ui";
 
 async function j(url: string) { const r = await fetch(url); if (!r.ok) throw new Error(await r.text()); return r.json(); }
+
+const TABLES = [
+  { no: 1, name: "Bilanço" },
+  { no: 2, name: "Kar Zarar" },
+  { no: 3, name: "Krediler" },
+  { no: 9, name: "Mevduat" },
+  { no: 12, name: "Sermaye Yeterliliği" },
+  { no: 15, name: "Rasyolar" },
+];
 
 export default function Bddk() {
   const [table, setTable] = useState(15);
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() || 12);
-  const q = useQuery({ queryKey: ["bddk", table, year, month], queryFn: () => j(`/api/bddk?table=${table}&year=${year}&month=${month}`) });
+  const [applied, setApplied] = useState({ table: 15, year: new Date().getFullYear(), month: new Date().getMonth() || 12 });
+  const q = useQuery({ queryKey: ["bddk", applied], queryFn: () => j(`/api/bddk?table=${applied.table}&year=${applied.year}&month=${applied.month}`) });
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold">BDDK Bankacılık Sektörü</h1>
-      <div className="flex flex-wrap gap-2">
-        <input type="number" value={table} onChange={(e) => setTable(+e.target.value)} className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 w-20" placeholder="Tablo" />
-        <input type="number" value={year} onChange={(e) => setYear(+e.target.value)} className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 w-24" />
-        <input type="number" value={month} onChange={(e) => setMonth(+e.target.value)} className="bg-zinc-900 border border-zinc-700 rounded px-2 py-1 w-20" />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">BDDK Bankacılık Sektörü</h1>
+        <p className="text-sm text-zinc-500 mt-1">Aylık bülten tabloları — kaynak: bddk.org.tr</p>
       </div>
-      {q.data?.rows && Array.isArray(q.data.rows) && q.data.rows.length > 0 ? (
-        <div className="rounded border border-zinc-800 p-4 overflow-x-auto">
-          <table className="w-full text-xs">
+
+      <Card>
+        <div className="p-4 flex flex-wrap items-end gap-3 border-b border-zinc-800/60">
+          <div className="flex gap-1.5 flex-wrap">
+            {TABLES.map((t) => (
+              <button key={t.no} onClick={() => setTable(t.no)} className={`px-2.5 py-1.5 rounded-lg text-xs ${table === t.no ? "bg-emerald-600 text-white" : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white"}`}>{t.name}</button>
+            ))}
+          </div>
+          <Input type="number" value={year} onChange={(e: any) => setYear(+e.target.value)} className="w-24" />
+          <Input type="number" value={month} onChange={(e: any) => setMonth(+e.target.value)} className="w-20" />
+          <Button onClick={() => setApplied({ table, year, month })}>Getir</Button>
+        </div>
+        {q.isLoading ? (
+          <div className="p-5 space-y-2">{Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-6" />)}</div>
+        ) : q.data?.rows?.length ? (
+          <Table>
+            <thead><tr><Th>Taraf</Th><Th>Göstergeler</Th><Th className="text-right">Değer</Th></tr></thead>
             <tbody>
-              {q.data.rows.slice(0, 60).map((row: any, i: number) => (
-                <tr key={i} className="border-t border-zinc-800">
-                  {Array.isArray(row) ? row.map((c: any, j: number) => (
-                    <td key={j} className="py-1 pr-3 text-zinc-300">{String(c)}</td>
-                  )) : <td>{JSON.stringify(row)}</td>}
+              {q.data.rows.slice(0, 80).map((row: any[], i: number) => (
+                <tr key={i} className="hover:bg-zinc-800/20">
+                  <Td className="text-zinc-400">{row[0]}</Td>
+                  <Td>{row[2]}</Td>
+                  <Td className="text-right tabular-nums">{Number(row[4]) ? Number(row[4]).toLocaleString("tr-TR", { maximumFractionDigits: 2 }) : row[4]}</Td>
                 </tr>
               ))}
             </tbody>
-          </table>
-          <div className="text-xs text-zinc-500 mt-2">Toplam {q.data.rows.length} satır</div>
-        </div>
-      ) : (
-        <div className="text-zinc-500">{q.isLoading ? "Yükleniyor…" : "Veri yok veya hata"}</div>
-      )}
-      {q.data?.error && <div className="text-rose-400 text-sm">{q.data.error}</div>}
+          </Table>
+        ) : (
+          <div className="p-8 text-center text-sm text-zinc-500">{q.data?.error || "Bu dönem için veri bulunamadı (bülten gecikmesi olabilir)."} <Badge variant="info">Deneyin: önceki ay</Badge></div>
+        )}
+      </Card>
     </div>
   );
 }

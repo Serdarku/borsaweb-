@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import UserMenu from "./UserMenu";
+import NavBar from "@/components/NavBar";
 
 export const metadata: Metadata = {
-  title: "BorsaWeb — BIST, TEFAS, Kripto & Makro",
+  title: { default: "BorsaWeb — BIST, TEFAS, Kripto & Makro", template: "%s · BorsaWeb" },
   description: "BIST hisseleri, TEFAS fonları, kripto ve makro verileri tek platformda.",
   openGraph: {
     title: "BorsaWeb",
@@ -13,37 +13,16 @@ export const metadata: Metadata = {
   },
 };
 
-const nav = [
-  { href: "/", label: "Dashboard" },
-  { href: "/hisse/THYAO", label: "Hisse" },
-  { href: "/portfoy", label: "Portföy" },
-  { href: "/fonlar", label: "Fonlar" },
-  { href: "/makro", label: "Makro" },
-  { href: "/bddk", label: "BDDK" },
-  { href: "/evds", label: "EVDS" },
-  { href: "/kripto", label: "Kripto" },
-  { href: "/chat", label: "AI Chat" },
-];
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr">
-      <body className="bg-zinc-950 text-zinc-100 min-h-screen">
+      <body className="antialiased">
         <Providers>
-          <header className="border-b border-zinc-800 px-6 py-3 flex items-center gap-6">
-            <span className="font-bold text-lg text-emerald-400">BorsaWeb</span>
-            <nav className="flex gap-4 text-sm text-zinc-300">
-              {nav.map((n) => (
-                <a key={n.href} href={n.href} className="hover:text-white">
-                  {n.label}
-                </a>
-              ))}
-            </nav>
-            <div className="ml-auto">
-              <UserMenu />
-            </div>
-          </header>
-          <main className="p-6">{children}</main>
+          <NavBar />
+          <main className="mx-auto max-w-6xl px-4 sm:px-6 py-6 fade-up">{children}</main>
+          <footer className="mx-auto max-w-6xl px-4 sm:px-6 py-8 text-xs text-zinc-600">
+            BorsaWeb · Veriler: Yahoo Finance · CoinGecko · TCMB · TEFAS · KAP · BDDK · Dünya Bankası — Yatırım tavsiyesi değildir.
+          </footer>
         </Providers>
       </body>
     </html>
