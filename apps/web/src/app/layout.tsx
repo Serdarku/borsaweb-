@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
+import UserMenu from "./UserMenu";
 
 export const metadata: Metadata = {
   title: "BorsaWeb — BIST, TEFAS, Kripto & Makro",
@@ -38,6 +39,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </a>
               ))}
             </nav>
+            <div className="ml-auto">
+              <UserMenu />
+            </div>
           </header>
           <main className="p-6">{children}</main>
         </Providers>
