@@ -3,8 +3,13 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "BorsaWeb",
-  description: "Birleşik Türkiye finans platformu",
+  title: "BorsaWeb — BIST, TEFAS, Kripto & Makro",
+  description: "BIST hisseleri, TEFAS fonları, kripto ve makro verileri tek platformda.",
+  openGraph: {
+    title: "BorsaWeb",
+    description: "Birleşik Türkiye finans platformu",
+    type: "website",
+  },
 };
 
 const nav = [
