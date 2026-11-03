@@ -11,18 +11,6 @@ services:
       - .env
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_QUANT_URL=http://quant:8000
-      - QUANT_URL=http://quant:8000
-    depends_on:
-      - quant
-    restart: unless-stopped
-
-  quant:
-    build:
-      context: .
-      dockerfile: apps/quant/Dockerfile
-    ports:
-      - "8000:8000"
     restart: unless-stopped
 
   db:
