@@ -13,6 +13,8 @@ const nav = [
   { href: "/portfoy", label: "Portföy" },
   { href: "/fonlar", label: "Fonlar" },
   { href: "/makro", label: "Makro" },
+  { href: "/bddk", label: "BDDK" },
+  { href: "/evds", label: "EVDS" },
   { href: "/kripto", label: "Kripto" },
   { href: "/chat", label: "AI Chat" },
 ];
