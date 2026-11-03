@@ -29,14 +29,16 @@ export default function NavBar() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-800/70 bg-zinc-950/80 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-emerald-400">
-          <TrendingUp size={20} />
-          <span className="hidden sm:inline">BorsaWeb</span>
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-zinc-800/70 bg-zinc-950/85 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 sm:px-6">
+        <div className="flex h-14 shrink-0 items-center gap-2">
+          <Link href="/" className="flex items-center gap-2 font-bold text-emerald-400">
+            <TrendingUp size={20} />
+            <span className="hidden sm:inline">BorsaWeb</span>
+          </Link>
+        </div>
 
-        <nav className="flex gap-1 overflow-x-auto text-sm">
+        <nav className="flex flex-1 items-center gap-1 overflow-x-auto py-3 text-sm [scrollbar-width:none]">
           {nav.map((n) => {
             const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
             return (
@@ -54,14 +56,14 @@ export default function NavBar() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-3">
-          <form onSubmit={onSearch} className="relative hidden md:block">
+        <div className="flex shrink-0 items-center gap-3">
+          <form onSubmit={onSearch} className="relative hidden lg:block">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Hisse ara… (THYAO)"
-              className="w-44 bg-zinc-900 border border-zinc-800 rounded-lg pl-7 pr-2 py-1.5 text-xs placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+              placeholder="Hisse ara…"
+              className="w-40 rounded-lg border border-zinc-800 bg-zinc-900 py-1.5 pl-7 pr-2 text-xs placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
             />
           </form>
           <UserMenu />
