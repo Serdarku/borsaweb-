@@ -14,11 +14,11 @@ const POPULAR = ["THYAO", "GARAN", "ASELS", "EREGL", "KCHOL", "TUPRS", "AKBNK", 
 
 export default function Dashboard() {
   const popular = useQuery({ queryKey: ["popular", POPULAR.join(",")], queryFn: () => j(`/api/quotes?symbols=${POPULAR.join(",")}`) });
-  const xu100 = useQuery({ queryKey: ["idx"], queryFn: () => j("/api/quote?symbol=XU100.IS") });
+  const xu100 = useQuery({ queryKey: ["idx"], queryFn: () => j("/api/index") });
   const usd = useQuery({ queryKey: ["fx", "USD"], queryFn: () => j("/api/fx?from=USD&to=TRY") });
   const eur = useQuery({ queryKey: ["fx", "EUR"], queryFn: () => j("/api/fx?from=EUR&to=TRY") });
   const btc = useQuery({ queryKey: ["crypto", "bitcoin"], queryFn: () => j("/api/crypto?id=bitcoin&vs=usd") });
-  const gold = useQuery({ queryKey: ["quote", "GC=F"], queryFn: () => j("/api/quote?symbol=GC=F") });
+  const eth = useQuery({ queryKey: ["crypto", "ethereum"], queryFn: () => j("/api/crypto?id=ethereum&vs=usd") });
 
   const loading = popular.isLoading || xu100.isLoading;
 
@@ -47,8 +47,8 @@ export default function Dashboard() {
             <Stat icon={<Landmark size={18} />} label="USD / TRY" value={usd.data?.rate?.toFixed(2) ?? "—"} />
             <Stat icon={<Landmark size={18} />} label="EUR / TRY" value={eur.data?.rate?.toFixed(2) ?? "—"} />
             <Stat icon={<Bitcoin size={18} />} label="Bitcoin" value={`$${btc.data?.prices?.usd?.toLocaleString("en-US", { maximumFractionDigits: 0 }) ?? "—"}`} />
-            <Stat icon={<Gem size={18} />} label="Altın (ons)" value={`$${gold.data?.price?.toLocaleString("en-US", { maximumFractionDigits: 2 }) ?? "—"}`} change={gold.data?.changePercent != null ? `${gold.data.changePercent.toFixed(2)}%` : undefined} />
-            <Stat icon={<Banknote size={18} />} label="Gram Altın" value={`≈ ₺${usd.data?.rate && gold.data?.price ? ((gold.data.price * usd.data.rate) / 31.1035).toFixed(2) : "—"}`} />
+            <Stat icon={<Gem size={18} />} label="Ethereum" value={`$${eth.data?.prices?.usd?.toLocaleString("en-US", { maximumFractionDigits: 0 }) ?? "—"}`} />
+            <Stat icon={<Banknote size={18} />} label="BIST 52H" value={xu100.data?.fiftyTwoWeekLow ? `${Math.round(xu100.data.fiftyTwoWeekLow)}–${Math.round(xu100.data.fiftyTwoWeekHigh)}` : "—"} />
           </>
         )}
       </div>

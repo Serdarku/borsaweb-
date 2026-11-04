@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <NavBar />
           <main className="mx-auto max-w-6xl px-4 sm:px-6 py-6 fade-up">{children}</main>
           <footer className="mx-auto max-w-6xl px-4 sm:px-6 py-8 text-xs text-zinc-600">
-            BorsaWeb · Veriler: Yahoo Finance · CoinGecko · TCMB · TEFAS · KAP · BDDK · Dünya Bankası — Yatırım tavsiyesi değildir.
+            BorsaWeb · Veriler: İş Yatırım · CoinGecko · TCMB · TEFAS · KAP · BDDK · Dünya Bankası — Yatırım tavsiyesi değildir.
           </footer>
         </Providers>
       </body>

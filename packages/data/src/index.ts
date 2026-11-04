@@ -1,10 +1,29 @@
-// Veri erişim katmanı (Faz 1)
+// Veri erişim katmanı — BIST fiyat/geçmiş/mali veriler İş Yatırım'dan (Yahoo iptal).
 export * from "@borsa/types";
 export { cache, TTL } from "./utils/cache";
 export { circuitCheck, circuitSuccess, circuitFailure, circuitStatus } from "./utils/circuit";
 export { fetchWithRetry } from "./utils/fetchWithRetry";
 
-export * from "./clients/yahoo";
+// İş Yatırım (BIST): quote/quotes/history/fundamentals/endeks
+export * from "./clients/isyatirim";
+
+// Haber: İş Yatırım'da yok → KAP bildirimlerinden türüyor (getNews alias'ı aşağıda)
+import { getKapNotifications } from "./clients/kap";
+
+export async function getNews(
+  input: string,
+  limit: number = 10
+): Promise<Array<{ title: string; link: string; pubDate?: string }>> {
+  const symbol = input.trim().toUpperCase().replace(/\.IS$/, "");
+  const items = await getKapNotifications(symbol, limit);
+  return items.map((it) => ({
+    title: it.title || it.summary || "KAP bildirimi",
+    link: it.url || "https://www.kap.org.tr",
+    pubDate: it.publishedAt,
+  }));
+}
+
+// Yahoo'ya bağımlı olmayan diğer kaynaklar
 export * from "./clients/coingecko";
 export * from "./clients/fx";
 export * from "./clients/tefas";
@@ -23,7 +42,7 @@ export interface DataSourceHealth {
 }
 
 export async function getDataHealth(): Promise<DataSourceHealth[]> {
-  const sources = ["yahoo", "coingecko", "frankfurter", "tcmb", "tefas", "kap"];
+  const sources = ["isyatirim", "coingecko", "frankfurter", "tcmb", "tefas", "kap"];
   const cb = circuitStatus();
   return sources.map((s) => {
     const c = cb.find((x) => x.host.includes(s) || s.includes(x.host.split(".")[0]));
