@@ -131,7 +131,7 @@ export default function HisseDetay() {
       {tab === "ozet" && (
         <div className="grid md:grid-cols-2 gap-4">
           <Card>
-            <div className="px-5 py-4 border-b border-zinc-800/60"><h3 className="text-sm font-semibold">Temel Veriler</h3></div>
+            <div className="px-5 py-4 border-b border-zinc-800/60 flex items-center justify-between"><h3 className="text-sm font-semibold">Temel Veriler</h3><Badge variant="default">İş Yatırım · yaklaşık</Badge></div>
             <CardBody className="grid grid-cols-2 gap-2">
               {fund.data ? (
                 <>
