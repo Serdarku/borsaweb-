@@ -54,9 +54,10 @@ export async function fetchBddkTable(
 export async function getBddkRatios(year?: number, month?: number) {
   const now = new Date();
   const y = year ?? now.getFullYear();
-  const m = month ?? now.getMonth(); // previous month approx (data published with lag)
+  // BDDK verisi birkaç ay gecikmeli yayınlanır; güvenli olarak 1-2 ay öncesi.
+  const m = month ?? (now.getMonth() === 0 ? 11 : now.getMonth() - 1);
   const safeMonth = m === 0 ? 12 : m;
-  const safeYear = m === 0 ? y - 1 : y;
+  const safeYear = m <= 0 ? y - 1 : y;
   return fetchBddkTable(15, safeYear, safeMonth, "TL", "10004", "tr");
 }
 

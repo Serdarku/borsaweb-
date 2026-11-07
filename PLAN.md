@@ -23,7 +23,7 @@
 - Dashboard: BIST100, kurlar, altın, VIX, movers, trending, watchlist
 - Hisse Detay: fiyat, fundamentals, teknik göstergeler, OHLC grafik, haberler, analist konsensüsü, temettü, kazanç, profil, karşılaştırma
 
-## Faz 4 — Portföy + Watchlist + DB
+## Faz 4 — Portföy + Watchlist + DB (TAMAMLANDI)
 - Pozisyon CRUD, değer/ağırlıklar/sektör kırılımı
 - Risk metrikleri, Monte Carlo/Markowitz/stres testi entegrasyonu
 - Watchlist kalıcı kaydetme

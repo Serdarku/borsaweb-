@@ -8,6 +8,15 @@ import { fetchWithRetry, cache, TTL } from "../utils/fetchWithRetry";
 const DATA = "https://www.isyatirim.com.tr/_layouts/15/Isyatirim.Website/Common/Data.aspx";
 const HEADERS = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
 
+// İş Yatırım sayıları Türkçe ondalık virgülü ("297,0000") ile döner.
+function toNum(v: any): number {
+  if (v == null) return NaN;
+  if (typeof v === "number") return v;
+  const s = String(v).trim();
+  if (s === "") return NaN;
+  return Number(s.replace(",", "."));
+}
+
 function toTrDate(d: Date): string {
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -48,11 +57,11 @@ async function fetchBars(symbol: string, range: string): Promise<OHLCBar[]> {
   const rows = await hisseTekil(symbol, toTrDate(start), toTrDate(end));
   return rows.map((r: any) => ({
     date: fromTrDate(r.HGDG_TARIH),
-    open: Number(r.HGDG_AOF ?? r.HGDG_KAPANIS),
-    high: Number(r.HGDG_MAX),
-    low: Number(r.HGDG_MIN),
-    close: Number(r.HGDG_KAPANIS),
-    volume: Number(r.HGDG_HACIM),
+    open: toNum(r.HGDG_AOF ?? r.HGDG_KAPANIS),
+    high: toNum(r.HGDG_MAX),
+    low: toNum(r.HGDG_MIN),
+    close: toNum(r.HGDG_KAPANIS),
+    volume: toNum(r.HGDG_HACIM),
   }));
 }
 
@@ -105,8 +114,8 @@ export async function getIndexQuote(symbol: string = "THYAO"): Promise<Quote> {
   const rows = await hisseTekil(ref, toTrDate(start), toTrDate(end));
   const last = rows[rows.length - 1];
   const prev = rows[rows.length - 2] || last;
-  const val = Number(last?.END_DEGER);
-  const prevVal = Number(prev?.END_DEGER);
+  const val = toNum(last?.END_DEGER);
+  const prevVal = toNum(prev?.END_DEGER);
   return {
     symbol: "XU100",
     name: "BIST %100",
@@ -114,8 +123,8 @@ export async function getIndexQuote(symbol: string = "THYAO"): Promise<Quote> {
     change: val - prevVal,
     changePercent: prevVal ? ((val - prevVal) / prevVal) * 100 : 0,
     currency: "TRY",
-    fiftyTwoWeekHigh: Math.max(...rows.map((r: any) => Number(r.END_DEGER))),
-    fiftyTwoWeekLow: Math.min(...rows.map((r: any) => Number(r.END_DEGER))),
+    fiftyTwoWeekHigh: Math.max(...rows.map((r: any) => toNum(r.END_DEGER))),
+    fiftyTwoWeekLow: Math.min(...rows.map((r: any) => toNum(r.END_DEGER))),
     timestamp: new Date().toISOString(),
   };
 }
@@ -135,11 +144,11 @@ async function maliTablo(symbol: string, year: number): Promise<any[]> {
 function pick(rows: any[], codes: string[], descRe?: RegExp): number | null {
   for (const c of codes) {
     const r = rows.find((x) => x.itemCode === c);
-    if (r) { const v = Number(r.value4 ?? r.value3 ?? r.value2 ?? r.value1); if (!Number.isNaN(v)) return v; }
+    if (r) { const v = toNum(r.value4 ?? r.value3 ?? r.value2 ?? r.value1); if (!Number.isNaN(v)) return v; }
   }
   if (descRe) {
     const r = rows.find((x) => descRe.test((x.itemDescTr || "").replace(/\s/g, "")));
-    if (r) { const v = Number(r.value4); if (!Number.isNaN(v)) return v; }
+    if (r) { const v = toNum(r.value4); if (!Number.isNaN(v)) return v; }
   }
   return null;
 }
@@ -161,7 +170,7 @@ export async function getFundamentals(input: string): Promise<Fundamentals> {
   const start = new Date();
   start.setDate(end.getDate() - 10);
   const ht = await hisseTekil(symbol, toTrDate(start), toTrDate(end));
-  const sermaye = Number(ht[ht.length - 1]?.SERMAYE || 0);
+  const sermaye = toNum(ht[ht.length - 1]?.SERMAYE || 0);
   const shares = sermaye > 1e6 ? sermaye : 0; // nominal TL ≈ lot (1 kr varsayımı); tutarsızsa 0
   const marketCap = shares && price ? shares * price : undefined;
   const eps = shares && netIncome != null ? netIncome / shares : undefined;
@@ -193,7 +202,7 @@ export async function getFinancialStatement(input: string, year?: number): Promi
     code: r.itemCode,
     tr: (r.itemDescTr || "").replace(/^\s+/, ""),
     en: r.itemDescEng,
-    value4: r.value4 != null && r.value4 !== "" ? Number(r.value4) : null,
-    value1: r.value1 != null && r.value1 !== "" ? Number(r.value1) : null,
+    value4: r.value4 != null && r.value4 !== "" ? toNum(r.value4) : null,
+    value1: r.value1 != null && r.value1 !== "" ? toNum(r.value1) : null,
   }));
 }

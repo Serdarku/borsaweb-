@@ -13,6 +13,21 @@ async function j(url: string, init?: RequestInit) {
   return r.json();
 }
 
+async function loadPortfolio(): Promise<Pos[]> {
+  try {
+    const r = await fetch("/api/portfolio");
+    if (r.ok) {
+      const d = await r.json();
+      return (d.positions || []).map((p: any) => ({ id: p.id, symbol: p.symbol, quantity: p.quantity, cost: p.costBasis }));
+    }
+  } catch {}
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
+}
+
 function Pct({ v }: { v: number }) {
   return <span className={v >= 0 ? "text-emerald-400" : "text-rose-400"}>{v >= 0 ? "+" : ""}{v.toFixed(2)}%</span>;
 }
@@ -33,10 +48,12 @@ export default function Portfoy() {
   const [mkLoading, setMkLoading] = useState(false);
 
   useEffect(() => {
-    try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setPositions(JSON.parse(raw)); } catch {}
+    loadPortfolio().then(setPositions).catch(() => {});
   }, []);
 
-  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); }, [positions]);
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(positions)); } catch {}
+  }, [positions]);
 
   const symbols = Array.from(new Set(positions.map((p) => p.symbol)));
   const quotes = useQuery({
@@ -47,12 +64,33 @@ export default function Portfoy() {
   const qmap: Record<string, any> = {};
   (quotes.data || []).forEach((q: any) => (qmap[q.symbol.split(".")[0]] = q));
 
-  function add() {
+  async function add() {
     if (!symbol.trim()) return;
-    setPositions((p) => [...p, { id: crypto.randomUUID(), symbol: symbol.toUpperCase(), quantity: qty, cost }]);
+    const sym = symbol.toUpperCase();
+    try {
+      const r = await fetch("/api/portfolio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbol: sym, quantity: qty, costBasis: cost }),
+      });
+      if (r.ok) {
+        const d = await r.json();
+        const p = d.position;
+        setPositions((prev) => [...prev, { id: p.id, symbol: p.symbol, quantity: p.quantity, cost: p.costBasis }]);
+        setQty(10); setCost(0);
+        return;
+      }
+    } catch {}
+    setPositions((p) => [...p, { id: crypto.randomUUID(), symbol: sym, quantity: qty, cost }]);
     setQty(10); setCost(0);
   }
-  const remove = (id: string) => setPositions((p) => p.filter((x) => x.id !== id));
+  const remove = async (id: string) => {
+    try {
+      const r = await fetch(`/api/portfolio?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      if (r.ok) { setPositions((p) => p.filter((x) => x.id !== id)); return; }
+    } catch {}
+    setPositions((p) => p.filter((x) => x.id !== id));
+  };
 
   let totalValue = 0, totalCost = 0;
   const weights: Record<string, number> = {};

@@ -9,6 +9,7 @@ import UserMenu from "@/app/UserMenu";
 const nav = [
   { href: "/", label: "Dashboard" },
   { href: "/portfoy", label: "Portföy" },
+  { href: "/watchlist", label: "İzleme" },
   { href: "/fonlar", label: "Fonlar" },
   { href: "/makro", label: "Makro" },
   { href: "/bddk", label: "BDDK" },
